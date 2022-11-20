@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+rm -rf dist
+mkdir -p dist
+echo "build src -> dist ..."
+./node_modules/.bin/lsc -co dist src

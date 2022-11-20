@@ -1,0 +1,20 @@
+doctype html
+html
+  head
+    +css([
+      {name: "bootstrap", path: "dist/css/bootstrap.min.css"},
+      {name: "@loadingio/bootstrap.ext"},
+      {name: "ldloader"}
+    ])
+  body
+    .w-1024.rwd.mx-auto.my-4
+      .btn.btn-primary(ld="print") print
+    +script([
+      {name: "proxise"},
+      {name: "@loadingio/debounce.js"},
+      {name: "@loadingio/ldquery"},
+      {name: "ldfile"},
+      {name: "ldloader"},
+      {name: "ldview"}
+    ])
+    script(type="module"): include:lsc index.ls
