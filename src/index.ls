@@ -13,9 +13,10 @@ printer = (opt = {}) ->
   @
 
 printer.get = ->
+  <~ Promise.resolve!then _
   if @_printer => return @_printer
   @_printer = new printer {count: 15}
-  @_printer.init!
+  <~ @_printer.init!then _
   @_printer
 
 printer.prototype = Object.create(Object.prototype) <<< do
@@ -52,7 +53,7 @@ printer.prototype = Object.create(Object.prototype) <<< do
 
   print: (payload = {}) -> @exec (page) ->
     p = if payload.html => page.setContent payload.html, {waitUntil: "networkidle0"}
-    else if payload.url => page.goto payload.url
+    else if payload.url => page.goto payload.url, {waitUntil: "networkidle0"}
     else Promise.reject(new lderror(1015))
     p.then -> page.pdf format: \A4
 

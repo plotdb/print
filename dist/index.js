@@ -30,14 +30,18 @@
     return this;
   };
   printer.get = function(){
-    if (this._printer) {
-      return this._printer;
-    }
-    this._printer = new printer({
-      count: 15
+    var this$ = this;
+    return Promise.resolve().then(function(){
+      if (this$._printer) {
+        return this$._printer;
+      }
+      this$._printer = new printer({
+        count: 15
+      });
+      return this$._printer.init().then(function(){
+        return this$._printer;
+      });
     });
-    this._printer.init();
-    return this._printer;
   };
   printer.prototype = import$(Object.create(Object.prototype), {
     exec: function(cb){
@@ -115,7 +119,9 @@
             waitUntil: "networkidle0"
           })
           : payload.url
-            ? page.goto(payload.url)
+            ? page.goto(payload.url, {
+              waitUntil: "networkidle0"
+            })
             : Promise.reject(new lderror(1015));
         return p.then(function(){
           return page.pdf({
