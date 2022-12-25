@@ -168,13 +168,17 @@
       });
     },
     init: function(){
-      var that, this$ = this;
-      return ((that = printer.browser)
-        ? Promise.resolve(that)
-        : puppeteer.launch({
+      var this$ = this;
+      return Promise.resolve().then(function(){
+        var that;
+        if (that = printer.browser) {
+          return Promise.resolve(that);
+        }
+        return puppeteer.launch({
           headless: true,
           args: ['--no-sandbox']
-        })).then(function(browser){
+        });
+      }).then(function(browser){
         var i;
         printer.browser = browser;
         return Promise.all((function(){

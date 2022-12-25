@@ -79,7 +79,10 @@ printer.prototype = Object.create(Object.prototype) <<< do
       .then (page) ~> obj.page = page
 
   init: ->
-    (if printer.browser => Promise.resolve(that) else puppeteer.launch({headless: true, args: <[--no-sandbox]>}))
+    Promise.resolve!
+      .then ->
+        if printer.browser => return Promise.resolve(that)
+        return puppeteer.launch({headless: true, args: <[--no-sandbox]>})
       .then (browser) ~>
         printer.browser = browser
         Promise.all (for i from 0 til @count => browser.newPage!then(-> {busy: false, page: it}))
