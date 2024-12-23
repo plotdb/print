@@ -4,7 +4,7 @@ printer = require "../src/index"
 
 { window } = new jsdom.JSDOM "<!DOCTYPE html>"
 purify = dompurify window
-printer = printer.get!
+(printer) <- printer.get!then _
 
 lib = fs.realpathSync path.dirname __filename
 

@@ -55,7 +55,11 @@ printer.prototype = Object.create(Object.prototype) <<< do
     p = if payload.html => page.setContent payload.html, {waitUntil: "networkidle0"}
     else if payload.url => page.goto payload.url, {waitUntil: "networkidle0"}
     else Promise.reject(new lderror(1015))
-    p.then -> page.pdf format: \A4
+    p
+      .then -> page.pdf format: \A4
+      .then (ret) ->
+        if !(ret instanceof Buffer) => ret = Buffer.from(ret)
+        return ret
 
   get: -> new Promise (res, rej) ~>
     for i from 0 til @pages.length =>

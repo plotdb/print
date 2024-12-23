@@ -127,6 +127,11 @@
           return page.pdf({
             format: 'A4'
           });
+        }).then(function(ret){
+          if (!(ret instanceof Buffer)) {
+            ret = Buffer.from(ret);
+          }
+          return ret;
         });
       });
     },
