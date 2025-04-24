@@ -1,5 +1,10 @@
 # Change Logs
 
+## v0.0.3
+
+ - add `debounce` option in print for a custom delay between page ready / print
+
+
 ## v0.0.2
 
  - fix bug: `init` should wait until browser is ready.

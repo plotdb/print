@@ -1,4 +1,4 @@
-require! <[fs fs-extra path lderror puppeteer tmp easy-pdf-merge]>
+require! <[fs fs-extra path lderror puppeteer tmp easy-pdf-merge @loadingio/debounce.js]>
 
 tmpfn = ->
   (res, rej) <- new Promise _
@@ -55,7 +55,11 @@ printer.prototype = Object.create(Object.prototype) <<< do
     p = if payload.html => page.setContent payload.html, {waitUntil: "networkidle0"}
     else if payload.url => page.goto payload.url, {waitUntil: "networkidle0"}
     else Promise.reject(new lderror(1015))
-    p.then -> page.pdf format: \A4
+    # note: if this Promise rejects with exception, `exec` will retry several times.
+    # be sure to check if anything wrong in your code if download keep on failing.
+    p
+      .then -> debounce(payload.debounce or 2000)
+      .then -> page.pdf format: \A4
 
   get: -> new Promise (res, rej) ~>
     for i from 0 til @pages.length =>
