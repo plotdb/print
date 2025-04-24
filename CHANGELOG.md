@@ -1,5 +1,10 @@
 # Change Logs
 
+## v0.1.1
+
+ - Merge feature update from version/0.0 branch
+
+
 ## v0.1.0
 
 Breaking Changes: upgrade to node >18 will be required for puppeteer > 23.11.1
