@@ -1,7 +1,8 @@
 # Change Logs
 
-## v0.0.3
+## v0.0.4
 
+ - skip 0.0.3 due to mistake during publish
  - add `debounce` option in print for a custom delay between page ready / print
 
 
