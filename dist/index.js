@@ -127,6 +127,22 @@
         return p.then(function(){
           return debounce(payload.debounce || 2000);
         }).then(function(){
+          return page.evaluate(function(){
+            var selectors, ps;
+            selectors = Array.from(document.images).map(function(img){
+              return !img.complete || img.naturalWidth === 0 ? img : null;
+            }).filter(function(it){
+              return it;
+            });
+            ps = selectors.map(function(img){
+              return new Promise(function(res, rej){
+                img.addEventListener('load', res);
+                return img.addEventListener('error', res);
+              });
+            });
+            return Promise.all(ps);
+          });
+        }).then(function(){
           return page.pdf({
             format: 'A4'
           });

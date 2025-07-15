@@ -1,5 +1,10 @@
 # Change Logs
 
+## v0.0.5
+
+ - (from 0.1.2) ensure image loaded before printing
+
+
 ## v0.0.4
 
  - skip 0.0.3 due to mistake during publish

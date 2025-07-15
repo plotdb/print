@@ -59,6 +59,16 @@ printer.prototype = Object.create(Object.prototype) <<< do
     # be sure to check if anything wrong in your code if download keep on failing.
     p
       .then -> debounce(payload.debounce or 2000)
+      .then ->
+        page.evaluate ->
+          selectors = Array.from document.images
+            .map (img) -> return if !img.complete or img.naturalWidth == 0 => img else null
+            .filter -> it
+          ps = selectors.map (img) ->
+            (res, rej) <- new Promise _
+            img.addEventListener \load, res
+            img.addEventListener \error, res
+          return Promise.all ps
       .then -> page.pdf format: \A4
 
   get: -> new Promise (res, rej) ~>
