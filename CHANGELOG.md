@@ -1,5 +1,10 @@
 # Change Logs
 
+## v0.1.2
+
+ - ensure image loaded before printing
+
+
 ## v0.1.1
 
  - Merge feature update from version/0.0 branch
