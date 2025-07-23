@@ -1,5 +1,12 @@
 # Change Logs
 
+## v0.2.0
+
+ - support PDF generation through remote api endpoint 
+ - support running printer as a print server
+ - support running server via docker
+
+
 ## v0.1.2
 
  - ensure image loaded before printing
