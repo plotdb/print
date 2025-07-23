@@ -8,7 +8,7 @@ if !process.env.APIKEY =>
 
 { window } = new jsdom.JSDOM "<!DOCTYPE html>"
 purify = dompurify window
-remote-printer = new printer server: url: "http://localhost:9123/pdf", key: process.env.APIKEY
+remote-printer = new printer server: url: process.env.URL, key: (process.env.APIKEY).trim!
 (printer) <- printer.get!then _
 
 lib = fs.realpathSync path.dirname __filename

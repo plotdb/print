@@ -4,7 +4,7 @@
   "description": "",
   "main": "dist/index.js",
   "scripts": {
-    "start": "APIKEY=$(cat secret.key) ./node_modules/.bin/lsc web/server.ls",
+    "start": "APIKEY=$(cat secret.key) URL=$(cat secret.url) ./node_modules/.bin/lsc web/server.ls",
     "print-server": "PORT=9123 APIKEY=$(cat secret.key) node dist/server.js"
   },
   "keywords": [],
