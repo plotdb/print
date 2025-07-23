@@ -1,4 +1,4 @@
-require! <[lderror @loadingio/debounce.js jsonwebtoken]>
+require! <[axios lderror @loadingio/debounce.js jsonwebtoken]>
 
 ctx = prepare: ->
   <~ Promise.resolve!then _
@@ -64,15 +64,12 @@ printer.prototype = Object.create(Object.prototype) <<< do
   print: (payload = {}) ->
     return if !@opt.server => @print-locally payload else @print-remotely payload
 
-  print-remotely: ({url, html, filename = "output.pdf"}) ->
-    payload = {url, html, filename, timestamp: Date.now!}
+  print-remotely: ({url, html}) ->
+    payload = {url, html, timestamp: Date.now!}
     if !((cfg = @opt.server or {}) and cfg.key and cfg.url) => return lderror.reject 1015
     token = jsonwebtoken.sign payload, cfg.key
     axios.post cfg.url, {token}, {responseType: \stream}
-      .then (ret) ->
-        res.setHeader \Content-Type, \application/pdf
-        res.setHeader \Content-Disposition, "inline; filename=\"#filename\""
-        return {stream: ret.data}
+      .then (ret) -> {stream: ret.data}
 
   print-locally: (payload = {}) -> @exec (page) ->
     p = if payload.html => page.setContent payload.html, {waitUntil: "networkidle0"}
