@@ -95,6 +95,14 @@ To deploy (use above name as example), you will need first create a secret:
     # update: when you need to update your key. note old key won't be deleted automatically
     gcloud secrets versions add APIKEY --data-file=<(echo "new-key")
 
+    # to allow cloud run access this secret, find out your service account:
+    gcloud run services describe my-pdf-service --platform=managed --region=asia-east1 \
+      --format="value(spec.template.spec.serviceAccountName)"
+    # then grant access to it:
+    gcloud projects add-iam-policy-binding <project-id> \
+      --member="serviceAccount:<the-account-returned-in-previous-command>" \
+      --role="roles/secretmanager.secretAccessor"
+
     gcloud run deploy my-pdf-service \
       --image=asia-east1-docker.pkg.dev/my-project/puppeteer-pdf/puppeteer-pdf:latest \
       --platform=managed \
