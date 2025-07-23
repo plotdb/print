@@ -70,6 +70,10 @@ You can run the prepared local server via:
 
 You probably will want to create your owner version of print server, in this case you can refe to src/server.ls or web/server.ls for a minimal example of creating a print server.
 
+These server script read `APIKEY` environment variable which will be set via `secret.key` file in npm script `print-server` and `start`, which contains a single line of secret code. You can generate a random secret code with `crypto`:
+
+    require("crypto").randomBytes(32).toString("base64")
+
 
 ### Deploy in Google Cloud Run with Docker Image
 
