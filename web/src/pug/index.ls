@@ -4,7 +4,7 @@ get-pdf = ({method = \local, type = \html} = {}) ->
   ldld.on!
   json = if type == \html => html: "<h1>Printed</h1><p> with HTML as payload </p>" 
   else link: "https://info.cern.ch/"
-  ld$.fetch "/api/print/#mthod", {method: \POST}, {json}
+  ld$.fetch "/api/print/#method", {method: \POST}, {json}
     .finally -> ldld.off!
     .then (r) -> r.blob!
     .then (blob) ->
