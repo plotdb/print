@@ -13,11 +13,13 @@ server = do
     app = express!
     app.use \/, express.static \web/static
     app.use body-parser.json!
-    app.post \/api/print, (req, res) ->
-      lc = {}
+    app.post \/api/print/cloud, (req, res) ->
+      url = req.body.url or \https://info.cern.ch/
+      printer.print {url} .then ({stream}) -> stream.pipe res
+
+    app.post \/api/print/local, (req, res) ->
       html = purify.sanitize req.body.html or ""
-      printer.print {html: html}
-        .then -> res.send it
+      printer.print {html: html} .then -> res.send it
 
     srcbuild.lsp({ base: "web" })
 

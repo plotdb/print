@@ -1,0 +1,11 @@
+{
+  "name": "@plotdb/print-docker",
+  "dependencies": {
+    "@loadingio/debounce.js": "^1.0.1",
+    "easy-pdf-merge": "^0.2.6",
+    "express": "^4",
+    "lderror": "^2.4.5",
+    "puppeteer": "^22.15.0",
+    "tmp": "^0.2.3"
+  }
+}

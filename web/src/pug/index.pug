@@ -8,7 +8,14 @@ html
     ])
   body
     .w-1024.rwd.mx-auto.my-4
-      .btn.btn-primary(ld="print") print
+      label Print HTML
+      .d-flex.g-2
+        .btn.btn-primary(ld="print",data-method="local",data-type="html") Print Locally (local Puppeteer)
+        .btn.btn-primary(ld="print",data-method="remote",data-type="html") Print Remotely (Google Cloud Run)
+      label Print URL
+      .d-flex.g-2
+        .btn.btn-primary(ld="print",data-method="local",data-type="link") Print Locally (local Puppeteer)
+        .btn.btn-primary(ld="print",data-method="remote",data-type="link") Print Remotely (Google Cloud Run)
     +script([
       {name: "proxise"},
       {name: "@loadingio/debounce.js"},

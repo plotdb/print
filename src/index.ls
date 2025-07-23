@@ -1,8 +1,18 @@
-require! <[fs fs-extra path lderror puppeteer tmp easy-pdf-merge @loadingio/debounce.js]>
+require! <[lderror @loadingio/debounce.js jsonwebtoken]>
+
+ctx = prepare: ->
+  <~ Promise.resolve!then _
+  if @inited => return
+  try
+    <[fs puppeteer tmp easy-pdf-merge]>.map ~> @[it] = require it
+  catch e
+    console.warn "[@plotdb/print] Dependencies import failed. Peer Dependencies ( puppeteer, tmp, easy-pdf-merge ) are required when using @plotdb/print in local mode. Please install them via npm"
+    return lderror.reject 1022
+  @inited = true
 
 tmpfn = ->
   (res, rej) <- new Promise _
-  tmp.file (err, path, fd, cb) ->
+  ctx.tmp.file (err, path, fd, cb) ->
     if err => return rej err
     res {fn: path, clean: cb}
 
@@ -40,18 +50,31 @@ printer.prototype = Object.create(Object.prototype) <<< do
         @print {html: payload.html} .then (buf) ->
           tmpfn!then ({fn}) ->
             (res, rej) <- new Promise _
-            (e) <- fs.write-file fn, buf, _
+            (e) <- ctx.fs.write-file fn, buf, _
             if e => return rej new Error(e)
             res fn
       .then (form-fn) ->
         if !payload.files or payload.files.length < 1 or (payload.files.length == 1 and !form-fn) =>
           return Promise.reject(new lderror(400))
         (res, rej) <- new Promise _
-        (e) <- easy-pdf-merge ((if form-fn => [form-fn] else []) ++ payload.files), payload.outfile, _
+        (e) <- ctx.easy-pdf-merge ((if form-fn => [form-fn] else []) ++ payload.files), payload.outfile, _
         if e => return rej e
         res payload.outfile
 
-  print: (payload = {}) -> @exec (page) ->
+  print: (payload = {}) ->
+    return if !@opt.server => @print-locally payload else @print-remotely payload
+
+  print-remotely: ({url, html, filename = "output.pdf"}) ->
+    payload = {url, html, filename, timestamp: Date.now!}
+    if !((cfg = @opt.server or {}) and cfg.key and cfg.url) => return lderror.reject 1015
+    token = jsonwebtoken.sign payload, cfg.key
+    axios.post cfg.url, {token}, {responseType: \stream}
+      .then (ret) ->
+        res.setHeader \Content-Type, \application/pdf
+        res.setHeader \Content-Disposition, "inline; filename=\"#filename\""
+        return {stream: ret.data}
+
+  print-locally: (payload = {}) -> @exec (page) ->
     p = if payload.html => page.setContent payload.html, {waitUntil: "networkidle0"}
     else if payload.url => page.goto payload.url, {waitUntil: "networkidle0"}
     else Promise.reject(new lderror(1015))
@@ -96,10 +119,21 @@ printer.prototype = Object.create(Object.prototype) <<< do
       .then (page) ~> obj.page = page
 
   init: ->
-    Promise.resolve!
+    ctx.prepare!
       .then ->
         if printer.browser => return Promise.resolve(that)
-        return puppeteer.launch({headless: true, args: <[--no-sandbox]>})
+        args = [
+          # usually not available on containers
+          "--disable-gpu"
+          # to avoid issues with Docker’s default low shared memory space of 64MB. write to /tmp instead
+          "--disable-dev-shm-usage"
+          # disable sandbox when using ROOT user (not recommended)
+          "--disable-setuid-sandbox", 
+          "--no-sandbox",
+          # FATAL:zygote_main_linux.cc(162)] Check failed: sandbox::ThreadHelpers::IsSingleThreaded()
+          "--single-process"
+        ] 
+        return ctx.puppeteer.launch({headless: true, args: args})
       .then (browser) ~>
         printer.browser = browser
         Promise.all (for i from 0 til @count => browser.newPage!then(-> {busy: false, page: it}))

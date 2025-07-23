@@ -77,9 +77,10 @@ pug_html = pug_html + "\u003Cscript" + (" type=\"text\u002Fjavascript\""+pug_att
 
 if (cfg && cfg.pack) {
 var name = md5(str);
-var filename = "/js/pack/" + name + "." + (typeof(cfg.min) == "undefined" || cfg.min ? "min" : "") + ".js";
-hashfile({type: "js", name: name, files: urls});
-pug_html = pug_html + "\u003Cscript" + (" type=\"text\u002Fjavascript\""+pug_attr("src", filename + libLoader._v, true, true)) + "\u003E\u003C\u002Fscript\u003E";
+//var filename = "/js/pack/" + name + "." + (typeof(cfg.min) == "undefined" || cfg.min ? "min" : "") + ".js";
+var fn = "/assets/bundle/" + name + "." + (typeof(cfg.min) == "undefined" || cfg.min ? "min" : "") + ".js";
+hashfile({type: "js", name: name, files: urls, src: locals.filename});
+pug_html = pug_html + "\u003Cscript" + (" type=\"text\u002Fjavascript\""+pug_attr("src", fn + libLoader._v, true, true)) + "\u003E\u003C\u002Fscript\u003E";
 }
 };
 pug_mixins["css"] = pug_interp = function(os,cfg){
@@ -140,9 +141,10 @@ pug_html = pug_html + "\u003Clink" + (" rel=\"stylesheet\" type=\"text\u002Fcss\
 
 if (cfg && cfg.pack) {
 var name = md5(str);
-var filename = "/css/pack/" + name + "." + (typeof(cfg.min) == "undefined" || cfg.min ? "min" : "") + ".css";
-hashfile({type: "css", name: name, files: urls});
-pug_html = pug_html + "\u003Clink" + (" rel=\"stylesheet\" type=\"text\u002Fcss\""+pug_attr("href", filename + libLoader._v, true, true)) + "\u003E";
+//var filename = "/css/pack/" + name + "." + (typeof(cfg.min) == "undefined" || cfg.min ? "min" : "") + ".css";
+var fn = "/assets/bundle/" + name + "." + (typeof(cfg.min) == "undefined" || cfg.min ? "min" : "") + ".css";
+hashfile({type: "css", name: name, files: urls, src: locals.filename});
+pug_html = pug_html + "\u003Clink" + (" rel=\"stylesheet\" type=\"text\u002Fcss\""+pug_attr("href", fn + libLoader._v, true, true)) + "\u003E";
 }
 };
 pug_html = pug_html + "\u003Chtml\u003E\u003Chead\u003E";
@@ -151,7 +153,7 @@ pug_mixins["css"]([
       {name: "@loadingio/bootstrap.ext"},
       {name: "ldloader"}
     ]);
-pug_html = pug_html + "\u003C\u002Fhead\u003E\u003Cbody\u003E\u003Cdiv class=\"w-1024 rwd mx-auto my-4\"\u003E\u003Cdiv class=\"btn btn-primary\" ld=\"print\"\u003Eprint\u003C\u002Fdiv\u003E\u003C\u002Fdiv\u003E";
+pug_html = pug_html + "\u003C\u002Fhead\u003E\u003Cbody\u003E\u003Cdiv class=\"w-1024 rwd mx-auto my-4\"\u003E\u003Cdiv class=\"d-flex g-2\"\u003E\u003Cdiv class=\"btn btn-primary\" ld=\"print\"\u003Eprint locally\u003C\u002Fdiv\u003E\u003Cdiv class=\"btn btn-primary\" ld=\"print-docker\"\u003Eprint via docker\u003C\u002Fdiv\u003E\u003C\u002Fdiv\u003E\u003C\u002Fdiv\u003E";
 pug_mixins["script"]([
       {name: "proxise"},
       {name: "@loadingio/debounce.js"},
@@ -160,7 +162,7 @@ pug_mixins["script"]([
       {name: "ldloader"},
       {name: "ldview"}
     ]);
-pug_html = pug_html + "\u003Cscript type=\"module\"\u003Evar ldld,view;ldld=new ldloader({className:\"ldld full\"});view=new ldview({root:document.body,action:{click:{print:function(){var l;console.log(\"prepareing pdf ... \");ldld.on();l={html:\"\u003Ch1\u003Ehello world\u003C\u002Fh1\u003E\u003Cp\u003E ok \u003C\u002Fp\u003E\"};return ld$.fetch(\"\u002Fapi\u002Fprint\",{method:\"POST\"},{json:l})[\"finally\"](function(){return ldld.off()}).then(function(l){return l.blob()}).then(function(l){console.log(\"returned blob:\",l);return ldfile.download({blob:l,name:\"result.pdf\"})})}}}});\u003C\u002Fscript\u003E\u003C\u002Fbody\u003E\u003C\u002Fhtml\u003E";
+pug_html = pug_html + "\u003Cscript type=\"module\"\u003Evar ldld,view;ldld=new ldloader({className:\"ldld full\"});view=new ldview({root:document.body,action:{click:{print:function(){var l;console.log(\"prepareing pdf ... \");ldld.on();l={html:\"\u003Ch1\u003Ehello world\u003C\u002Fh1\u003E\u003Cp\u003E ok \u003C\u002Fp\u003E\"};return ld$.fetch(\"\u002Fapi\u002Fprint\",{method:\"POST\"},{json:l})[\"finally\"](function(){return ldld.off()}).then(function(l){return l.blob()}).then(function(l){console.log(\"returned blob:\",l);return ldfile.download({blob:l,name:\"result.pdf\"})})},\"print-docker\":function(){var l;console.log(\"prepareing pdf ... \");ldld.on();l={html:\"\u003Ch1\u003Ehello world\u003C\u002Fh1\u003E\u003Cp\u003E ok \u003C\u002Fp\u003E\"};return ld$.fetch(\"\u002Fapi\u002Fprint-docker\",{method:\"POST\"},{json:l})[\"finally\"](function(){return ldld.off()}).then(function(l){return l.blob()}).then(function(l){console.log(\"returned blob:\",l);return ldfile.download({blob:l,name:\"result.pdf\"})})}}}});\u003C\u002Fscript\u003E\u003C\u002Fbody\u003E\u003C\u002Fhtml\u003E";
     }.call(this, "Array" in locals_for_with ?
         locals_for_with.Array :
         typeof Array !== 'undefined' ? Array : undefined, "c" in locals_for_with ?
