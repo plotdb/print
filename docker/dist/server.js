@@ -4,7 +4,7 @@
   express = require('express');
   jsonwebtoken = require('jsonwebtoken');
   print = require("./index");
-  APIKEY = process.env.APIKEY || 'api-key-not-given';
+  APIKEY = (process.env.APIKEY || 'api-key-not-given').trim();
   printer = new print();
   process.on('SIGINT', function(){
     return process.exit();

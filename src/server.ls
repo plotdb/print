@@ -1,7 +1,7 @@
 require! <[express jsonwebtoken]>
 print = require "./index"
 
-APIKEY = process.env.APIKEY or 'api-key-not-given'
+APIKEY = (process.env.APIKEY or 'api-key-not-given').trim!
 printer = new print!
 process.on \SIGINT, -> process.exit!
 
