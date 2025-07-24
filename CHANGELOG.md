@@ -1,5 +1,10 @@
 # Change Logs
 
+## v0.2.2
+
+ - fix bug: print server return incorrect field from printed result.
+
+
 ## v0.2.1
 
  - limit release scope to dist files only

@@ -40,8 +40,11 @@
         url: payload.url,
         html: payload.html
       });
-    }).then(function(it){
-      return res.send(it);
+    }).then(function(arg$){
+      var buf;
+      buf = arg$.buf;
+      res.setHeader('Content-Type', 'application/octet-stream');
+      return res.end(buf);
     })['catch'](function(e){
       return console.log("[print failed] ", e.toString());
     });

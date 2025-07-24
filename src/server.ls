@@ -22,7 +22,9 @@ app.post \/pdf, (req, res) ->
   console.log "[#{payload.timestamp or 'no-timestamp'}] " + log-text
   printer.init!
     .then -> printer.print payload{url, html}
-    .then -> res.send it
+    .then ({buf}) ->
+      res.setHeader \Content-Type, \application/octet-stream
+      res.end buf
     .catch (e) -> console.log "[print failed] ", e.toString!
 
 port = process.env.PORT or 8080
