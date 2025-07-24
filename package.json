@@ -47,7 +47,7 @@
     "tmp": "^0.2.1"
   },
   "dependencies": {
-    "axios": "^1.10.0",
+    "axios": "^1.11.0",
     "jsonwebtoken": "^9.0.2"
   }
 }
