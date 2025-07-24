@@ -23,7 +23,7 @@ app.post \/pdf, (req, res) ->
   printer.init!
     .then -> printer.print payload{url, html}
     .then -> res.send it
-    .catch -> console.log "[print failed] ", e.toString!
+    .catch (e) -> console.log "[print failed] ", e.toString!
 
 port = process.env.PORT or 8080
 app.listen port

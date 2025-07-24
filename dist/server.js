@@ -42,7 +42,7 @@
       });
     }).then(function(it){
       return res.send(it);
-    })['catch'](function(){
+    })['catch'](function(e){
       return console.log("[print failed] ", e.toString());
     });
   });
