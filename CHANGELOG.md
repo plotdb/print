@@ -5,6 +5,7 @@
  - support PDF generation through remote api endpoint 
  - support running printer as a print server
  - support running server via docker
+ - (breaking change) change returned value from print to `{buffer}` instead of `buffer` to align with remote api spec and make it foolproof about the returned value.
 
 
 ## v0.1.2

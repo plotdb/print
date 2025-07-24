@@ -29,7 +29,7 @@ Then, in your code:
       .then (buf) ->
         # Print via link
         printer.print {link: "https://to-your-website..."}
-      .then (buf) -> # return a Buffer object of the desired PDF
+      .then ({buf}) -> # return a Buffer object of the desired PDF
 
 
 ## Usage: Cloud Mode

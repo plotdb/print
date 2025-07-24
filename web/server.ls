@@ -1,6 +1,6 @@
 require! <[fs express path @plotdb/srcbuild @plotdb/colors lderror body-parser]>
 require! <[jsdom dompurify]>
-printer = require "../src/index"
+Print = require "../src/index"
 
 if !process.env.APIKEY =>
   console.log "please specify environment variable APIKEY for remote generation"
@@ -8,8 +8,10 @@ if !process.env.APIKEY =>
 
 { window } = new jsdom.JSDOM "<!DOCTYPE html>"
 purify = dompurify window
-remote-printer = new printer server: url: process.env.URL, key: (process.env.APIKEY).trim!
-(printer) <- printer.get!then _
+printer = {}
+(local) <- Print.get!then _
+printer.remote = new Print server: url: process.env.URL, key: (process.env.APIKEY).trim!
+printer.local = local
 
 lib = fs.realpathSync path.dirname __filename
 
@@ -22,7 +24,7 @@ server = do
       url = req.body.url or \https://info.cern.ch/
       html = req.body.html or (if url => undefined else 'hello world')
       filename = "output.pdf"
-      remote-printer.print {url, html}
+      printer.remote.print {url, html}
         .then ({stream}) ->
           res.setHeader \Content-Type, \application/pdf
           res.setHeader \Content-Disposition, "attachment; filename=\"#filename\""
@@ -34,8 +36,8 @@ server = do
     app.post \/api/print/local, (req, res) ->
       url = req.body.url or \https://info.cern.ch/
       html = purify.sanitize req.body.html or ""
-      printer.print {url, html}
-        .then -> res.send it
+      printer.local.print {url, html}
+        .then -> res.send it.buf
         .catch -> res.status 500 .send!
 
     srcbuild.lsp({ base: "web" })

@@ -92,7 +92,7 @@ printer.prototype = Object.create(Object.prototype) <<< do
       .then -> page.pdf format: \A5
       .then (ret) ->
         if !(ret instanceof Buffer) => ret = Buffer.from(ret)
-        return ret
+        return {buf: ret}
 
   get: -> new Promise (res, rej) ~>
     for i from 0 til @pages.length =>

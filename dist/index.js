@@ -195,7 +195,9 @@
           if (!(ret instanceof Buffer)) {
             ret = Buffer.from(ret);
           }
-          return ret;
+          return {
+            buf: ret
+          };
         });
       });
     },
