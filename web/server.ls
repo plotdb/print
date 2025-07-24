@@ -25,7 +25,7 @@ server = do
       remote-printer.print {url, html}
         .then ({stream}) ->
           res.setHeader \Content-Type, \application/pdf
-          res.setHeader \Content-Disposition, "inline; filename=\"#filename\""
+          res.setHeader \Content-Disposition, "attachment; filename=\"#filename\""
           stream.pipe res
         .catch ->
           console.log it
