@@ -1,5 +1,10 @@
 # Change Logs
 
+## v0.2.1
+
+ - limit release scope to dist files only
+
+
 ## v0.2.0
 
  - support PDF generation through remote api endpoint 
