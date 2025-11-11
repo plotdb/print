@@ -81,15 +81,24 @@ printer.prototype = Object.create(Object.prototype) <<< do
       .then -> debounce(payload.debounce or 2000)
       .then ->
         page.evaluate ->
-          selectors = Array.from document.images
-            .map (img) -> return if !img.complete or img.naturalWidth == 0 => img else null
-            .filter -> it
-          ps = selectors.map (img) ->
+          ps = Array.from(document.images).map (img) ->
             (res, rej) <- new Promise _
-            img.addEventListener \load, res
-            img.addEventListener \error, res
+            if img.complete => return res!
+            img.addEventListener \load, -> res!
+            img.addEventListener \error, -> res!
           return Promise.all ps
-      .then -> page.pdf format: \A5
+      .then ->
+        # 1. with puppeteer API: use web stream. requires newer NodeJS (> 18)
+        # it throws exception (ReadableStream is not a constructor) with older nodejs (v16):
+        #page.pdf format: \A5
+        # 2. with Chrome DevTools Protocol (CDP), by pass puppeteer directly.
+        (client) <- page.target!createCDPSession!then _
+        opt =
+          printBackground: true
+          paperWidth: 5.8  # A5 width (inch)
+          paperHeight: 8.3 # A5 height (inch)
+        ({data}) <- client.send 'Page.printToPDF', opt .then _
+        Buffer.from data, \base64
       .then (ret) ->
         if !(ret instanceof Buffer) => ret = Buffer.from(ret)
         return {buf: ret}

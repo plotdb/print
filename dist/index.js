@@ -173,23 +173,35 @@
           return debounce(payload.debounce || 2000);
         }).then(function(){
           return page.evaluate(function(){
-            var selectors, ps;
-            selectors = Array.from(document.images).map(function(img){
-              return !img.complete || img.naturalWidth === 0 ? img : null;
-            }).filter(function(it){
-              return it;
-            });
-            ps = selectors.map(function(img){
+            var ps;
+            ps = Array.from(document.images).map(function(img){
               return new Promise(function(res, rej){
-                img.addEventListener('load', res);
-                return img.addEventListener('error', res);
+                if (img.complete) {
+                  return res();
+                }
+                img.addEventListener('load', function(){
+                  return res();
+                });
+                return img.addEventListener('error', function(){
+                  return res();
+                });
               });
             });
             return Promise.all(ps);
           });
         }).then(function(){
-          return page.pdf({
-            format: 'A5'
+          return page.target().createCDPSession().then(function(client){
+            var opt;
+            opt = {
+              printBackground: true,
+              paperWidth: 5.8,
+              paperHeight: 8.3
+            };
+            return client.send('Page.printToPDF', opt).then(function(arg$){
+              var data;
+              data = arg$.data;
+              return Buffer.from(data, 'base64');
+            });
           });
         }).then(function(ret){
           if (!(ret instanceof Buffer)) {

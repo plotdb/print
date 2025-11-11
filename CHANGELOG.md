@@ -1,5 +1,11 @@
 # Change Logs
 
+## v0.2.3
+
+ - tweak image promises to prevent broken images from blocking page loading
+ - use Chrome DevTools Protocl (CDP) for PDF to prevent ReadableStream exception in older Nodejs by puppeteer
+
+
 ## v0.2.2
 
  - fix bug: print server return incorrect field from printed result.
