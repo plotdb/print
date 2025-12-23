@@ -24,6 +24,11 @@
  - (breaking change) change returned value from print to `{buffer}` instead of `buffer` to align with remote api spec and make it foolproof about the returned value.
 
 
+## v0.0.5
+
+ - (from 0.1.2) ensure image loaded before printing
+
+
 ## v0.1.2
 
  - ensure image loaded before printing
