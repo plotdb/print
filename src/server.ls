@@ -27,7 +27,9 @@ app.post \/pdf, (req, res) ->
     .then ({buf}) ->
       console.log "#tag done in #{((Date.now! - t0) / 1000).toFixed(1)}s, #{buf.length} bytes"
       res.setHeader \Content-Type, \application/octet-stream
-      res.end buf
+      # Cloud Run 對帶 Content-Length 的回應限 32MiB; 分塊寫出改走 chunked 即無此限制.
+      for i from 0 til buf.length by 1048576 => res.write buf.subarray(i, i + 1048576)
+      res.end!
     .catch (e) ->
       console.log "#tag [print failed] ", (e or '').toString!
       if !res.headersSent => res.status 500 .send!
