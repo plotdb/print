@@ -68,26 +68,27 @@
         trial: 0
       };
       _ = function(){
-        return this$.get().then(function(obj){
-          return lc.obj = obj;
-        }).then(function(){
+        return Promise.resolve().then(function(){
           return cb(lc.obj.page);
-        }).then(function(it){
-          return lc.ret = it;
-        })['catch'](function(){
-          if ((lc.trial++) > 5) {
-            return Promise.reject(new lderror(0));
+        })['catch'](function(e){
+          if ((lc.trial++) >= 2) {
+            return Promise.reject(e);
           }
+          console.log("[@plotdb/print] retry (" + lc.trial + "): ", (e || '').toString());
           return this$.respawn(lc.obj).then(function(){
             return _();
           });
-        }).then(function(){
-          return this$.free(lc.obj);
-        }).then(function(){
-          return lc.ret;
         });
       };
-      return _();
+      return this.get().then(function(obj){
+        return lc.obj = obj;
+      }).then(function(){
+        return _();
+      })['finally'](function(){
+        if (lc.obj) {
+          return this$.free(lc.obj);
+        }
+      });
     },
     merge: function(payload){
       var this$ = this;
@@ -149,7 +150,8 @@
       return axios.post(cfg.url, {
         token: token
       }, {
-        responseType: 'stream'
+        responseType: 'stream',
+        timeout: cfg.timeout || 0
       }).then(function(ret){
         return {
           stream: ret.data
@@ -157,19 +159,74 @@
       });
     },
     printLocally: function(payload){
+      var this$ = this;
       payload == null && (payload = {});
       return this.exec(function(page){
-        var p;
+        var lc, lap, short, h, k, v, timeout, p;
+        lc = {
+          t0: Date.now(),
+          lap: [],
+          req: new Map(),
+          slow: [],
+          failed: []
+        };
+        lap = function(n){
+          return lc.lap.push(n + " " + ((Date.now() - lc.t0) / 1000).toFixed(1) + "s");
+        };
+        short = function(u){
+          u == null && (u = '');
+          return u.replace(/\?.*/, '').substring(0, 120);
+        };
+        h = {
+          request: function(r){
+            return lc.req.set(r, Date.now());
+          },
+          requestfinished: function(r){
+            var t, d;
+            if (!(t = lc.req.get(r))) {
+              return;
+            }
+            lc.req['delete'](r);
+            if ((d = Date.now() - t) > 3000) {
+              return lc.slow.push(d + "ms " + short(r.url()));
+            }
+          },
+          requestfailed: function(r){
+            lc.req['delete'](r);
+            return lc.failed.push((r.failure() || {}).errorText + " " + short(r.url()));
+          }
+        };
+        for (k in h) {
+          v = h[k];
+          page.on(k, v);
+        }
+        timeout = payload.timeout || 30000;
         p = payload.html
           ? page.setContent(payload.html, {
-            waitUntil: "networkidle0"
+            waitUntil: 'domcontentloaded',
+            timeout: timeout
           })
           : payload.url
             ? page.goto(payload.url, {
-              waitUntil: "networkidle0"
+              waitUntil: 'domcontentloaded',
+              timeout: timeout
             })
             : Promise.reject(new lderror(1015));
         return p.then(function(){
+          return lap('dom');
+        }).then(function(){
+          return page.waitForNetworkIdle({
+            idleTime: 500,
+            timeout: payload.idleTimeout || 20000
+          });
+        })['catch'](function(e){
+          if (!(e && e.name === 'TimeoutError') || !lc.lap.length) {
+            return Promise.reject(e);
+          }
+          return lc.idleTimeout = true;
+        }).then(function(){
+          return lap('idle');
+        }).then(function(){
           return debounce(payload.debounce || 2000);
         }).then(function(){
           return page.evaluate(function(){
@@ -187,8 +244,14 @@
                 });
               });
             });
-            return Promise.all(ps);
+            return Promise.race([
+              Promise.all(ps), new Promise(function(res){
+                return setTimeout(res, 10000);
+              })
+            ]);
           });
+        }).then(function(){
+          return lap('img');
         }).then(function(){
           return page.target().createCDPSession().then(function(client){
             var opt;
@@ -200,16 +263,40 @@
             return client.send('Page.printToPDF', opt).then(function(arg$){
               var data;
               data = arg$.data;
+              client.detach()['catch'](function(){});
               return Buffer.from(data, 'base64');
             });
           });
         }).then(function(ret){
+          lap('pdf');
           if (!(ret instanceof Buffer)) {
             ret = Buffer.from(ret);
           }
           return {
             buf: ret
           };
+        })['finally'](function(){
+          var pending, k, ref$, v;
+          if (this$.opt.log) {
+            pending = Array.from(lc.req.keys()).map(function(r){
+              return short(r.url());
+            });
+            console.log("[@plotdb/print] " + lc.lap.join(' / ') + (lc.idleTimeout ? ' (idle timeout)' : ''));
+            if (lc.slow.length) {
+              console.log("[@plotdb/print] slow requests:\n  " + lc.slow.join('\n  '));
+            }
+            if (lc.failed.length) {
+              console.log("[@plotdb/print] failed requests:\n  " + lc.failed.join('\n  '));
+            }
+            if (pending.length) {
+              console.log("[@plotdb/print] pending requests:\n  " + pending.join('\n  '));
+            }
+          }
+          for (k in ref$ = h) {
+            v = ref$[k];
+            page.off(k, v);
+          }
+          return page.goto('about:blank')['catch'](function(){});
         });
       });
     },
@@ -242,29 +329,25 @@
     respawn: function(obj){
       return Promise.resolve().then(function(){
         if (!obj.page.isClosed()) {
-          return page.close();
+          return obj.page.close();
         }
       })['catch'](function(){}).then(function(){
-        return printer.browser.newPage();
+        return printer.launch();
+      }).then(function(browser){
+        return browser.newPage();
       }).then(function(page){
         return obj.page = page;
       });
     },
     init: function(){
       var this$ = this;
-      return ctx.prepare().then(function(){
-        var that, args;
-        if (that = printer.browser) {
-          return Promise.resolve(that);
-        }
-        args = ["--disable-gpu", "--disable-dev-shm-usage", "--disable-setuid-sandbox", "--no-sandbox", "--single-process"];
-        return ctx.puppeteer.launch({
-          headless: true,
-          args: args
-        });
+      if (this._init) {
+        return this._init;
+      }
+      return this._init = ctx.prepare().then(function(){
+        return printer.launch();
       }).then(function(browser){
         var i;
-        printer.browser = browser;
         return Promise.all((function(){
           var i$, to$, results$ = [];
           for (i$ = 0, to$ = this.count; i$ < to$; ++i$) {
@@ -281,9 +364,35 @@
         }.call(this$)));
       }).then(function(it){
         return this$.pages = it;
+      })['catch'](function(e){
+        this$._init = null;
+        return Promise.reject(e);
       });
     }
   });
+  printer.launch = function(){
+    var args, this$ = this;
+    if (this._launch) {
+      return this._launch;
+    }
+    args = ["--disable-gpu", "--disable-dev-shm-usage", "--disable-setuid-sandbox", "--no-sandbox", "--single-process"];
+    return this._launch = ctx.puppeteer.launch({
+      headless: true,
+      args: args
+    }).then(function(browser){
+      this$.browser = browser;
+      browser.on('disconnected', function(){
+        console.log("[@plotdb/print] browser disconnected.");
+        if (this$.browser === browser) {
+          return this$.browser = null, this$._launch = null, this$;
+        }
+      });
+      return browser;
+    })['catch'](function(e){
+      this$._launch = null;
+      return Promise.reject(e);
+    });
+  };
   module.exports = printer;
   function import$(obj, src){
     var own = {}.hasOwnProperty;

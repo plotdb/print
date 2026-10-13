@@ -5,7 +5,9 @@
   jsonwebtoken = require('jsonwebtoken');
   print = require("./index");
   APIKEY = (process.env.APIKEY || 'api-key-not-given').trim();
-  printer = new print();
+  printer = new print({
+    log: true
+  });
   process.on('SIGINT', function(){
     return process.exit();
   });
@@ -17,7 +19,7 @@
     });
   });
   app.post('/pdf', function(req, res){
-    var token, payload, e, logText;
+    var token, payload, e, logText, tag, t0;
     try {
       if (!(token = req.body.token)) {
         throw new Error();
@@ -34,7 +36,9 @@
     logText = payload.url
       ? "url: " + payload.url
       : payload.html ? "html: " + (payload.html + '').length + "bytes" : "(payload: no content)";
-    console.log(("[" + (payload.timestamp || 'no-timestamp') + "] ") + logText);
+    tag = "[" + (payload.timestamp || 'no-timestamp') + "]";
+    console.log((tag + " ") + logText);
+    t0 = Date.now();
     return printer.init().then(function(){
       return printer.print({
         url: payload.url,
@@ -43,10 +47,14 @@
     }).then(function(arg$){
       var buf;
       buf = arg$.buf;
+      console.log(tag + " done in " + ((Date.now() - t0) / 1000).toFixed(1) + "s, " + buf.length + " bytes");
       res.setHeader('Content-Type', 'application/octet-stream');
       return res.end(buf);
     })['catch'](function(e){
-      return console.log("[print failed] ", e.toString());
+      console.log(tag + " [print failed] ", (e || '').toString());
+      if (!res.headersSent) {
+        return res.status(500).send();
+      }
     });
   });
   port = process.env.PORT || 8080;

@@ -1,5 +1,15 @@
 # Change Logs
 
+## v0.2.4
+
+ - fix memory leak: `init` now only creates pages once instead of every call ( server calls it per request )
+ - relaunch browser after it disconnects ( e.g., OOM ), and fix `respawn` closing an undefined `page`
+ - wait for `domcontentloaded` then network idle ( capped at `idle-timeout`, default 20s ) instead of `networkidle0`,
+   so a hanging request no longer fails the whole job and triggers reloads
+ - cap image waiting to 10s, reduce retries from 6 to 2, reset page to `about:blank` after printing
+ - server: respond 500 on failure instead of leaving the request hanging; log timings and slow / failed / pending requests
+ - support `timeout` option in `server` config for remote printing
+
 ## v0.2.3
 
  - tweak image promises to prevent broken images from blocking page loading
@@ -22,6 +32,11 @@
  - support running printer as a print server
  - support running server via docker
  - (breaking change) change returned value from print to `{buffer}` instead of `buffer` to align with remote api spec and make it foolproof about the returned value.
+
+
+## v0.0.5
+
+ - (from 0.1.2) ensure image loaded before printing
 
 
 ## v0.1.2
