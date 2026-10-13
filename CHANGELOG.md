@@ -1,5 +1,9 @@
 # Change Logs
 
+## v0.2.5
+
+ - server: send PDF with chunked transfer encoding so responses over Cloud Run's 32MiB limit ( for responses with Content-Length ) can be delivered
+
 ## v0.2.4
 
  - fix memory leak: `init` now only creates pages once instead of every call ( server calls it per request )

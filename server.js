@@ -45,11 +45,15 @@
         html: payload.html
       });
     }).then(function(arg$){
-      var buf;
+      var buf, i$, to$, i;
       buf = arg$.buf;
       console.log(tag + " done in " + ((Date.now() - t0) / 1000).toFixed(1) + "s, " + buf.length + " bytes");
       res.setHeader('Content-Type', 'application/octet-stream');
-      return res.end(buf);
+      for (i$ = 0, to$ = buf.length; i$ < to$; i$ += 1048576) {
+        i = i$;
+        res.write(buf.subarray(i, i + 1048576));
+      }
+      return res.end();
     })['catch'](function(e){
       console.log(tag + " [print failed] ", (e || '').toString());
       if (!res.headersSent) {
