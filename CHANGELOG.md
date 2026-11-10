@@ -1,5 +1,10 @@
 # Change Logs
 
+## v0.2.6
+
+ - support `pdf` option in `print` ( local, remote and server ) to override `Page.printToPDF` parameters such as `preferCSSPageSize`, paper size and margins. default stays A5
+ - fix `printer.get` returning a printer before its init completes when called concurrently
+
 ## v0.2.5
 
  - server: send PDF with chunked transfer encoding so responses over Cloud Run's 32MiB limit ( for responses with Content-Length ) can be delivered
