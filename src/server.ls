@@ -23,7 +23,7 @@ app.post \/pdf, (req, res) ->
   console.log "#tag " + log-text
   t0 = Date.now!
   printer.init!
-    .then -> printer.print payload{url, html}
+    .then -> printer.print payload{url, html, pdf}
     .then ({buf}) ->
       console.log "#tag done in #{((Date.now! - t0) / 1000).toFixed(1)}s, #{buf.length} bytes"
       res.setHeader \Content-Type, \application/octet-stream

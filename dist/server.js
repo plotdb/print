@@ -42,7 +42,8 @@
     return printer.init().then(function(){
       return printer.print({
         url: payload.url,
-        html: payload.html
+        html: payload.html,
+        pdf: payload.pdf
       });
     }).then(function(arg$){
       var buf, i$, to$, i;

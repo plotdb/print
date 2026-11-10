@@ -31,6 +31,12 @@ Then, in your code:
         printer.print {link: "https://to-your-website..."}
       .then ({buf}) -> # return a Buffer object of the desired PDF
 
+Paper defaults to A5. Use `pdf` to override `Page.printToPDF` parameters ( `preferCSSPageSize`, `landscape`, `scale`, `paperWidth`, `paperHeight`, `marginTop`, `marginBottom`, `marginLeft`, `marginRight`, `pageRanges` ), e.g., to follow CSS `@page`:
+
+    printer.print {html: "...", pdf: {preferCSSPageSize: true}}
+
+`pdf` works in both local and cloud mode ( the server needs v0.2.6 or later ).
+
 
 ## Usage: Cloud Mode
 

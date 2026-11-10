@@ -10,6 +10,9 @@ ctx = prepare: ->
     return lderror.reject 1022
   @inited = true
 
+# Page.printToPDF 可由呼叫端指定的參數
+PDF-OPTS = <[preferCSSPageSize landscape scale paperWidth paperHeight marginTop marginBottom marginLeft marginRight pageRanges]>
+
 tmpfn = ->
   (res, rej) <- new Promise _
   ctx.tmp.file (err, path, fd, cb) ->
@@ -22,12 +25,15 @@ printer = (opt = {}) ->
   @queue = []
   @
 
+# 共用的 printer. 存 promise, 同時呼叫時才不會拿到還沒 init 完的 printer
 printer.get = ->
-  <~ Promise.resolve!then _
-  if @_printer => return @_printer
-  @_printer = new printer {count: 15}
-  <~ @_printer.init!then _
-  @_printer
+  if @_get => return @_get
+  p = new printer {count: 15}
+  @_get = p.init!
+    .then -> p
+    .catch (e) ~>
+      @_get = null
+      Promise.reject e
 
 printer.prototype = Object.create(Object.prototype) <<< do
   exec: (cb) ->
@@ -65,8 +71,8 @@ printer.prototype = Object.create(Object.prototype) <<< do
   print: (payload = {}) ->
     return if !@opt.server => @print-locally payload else @print-remotely payload
 
-  print-remotely: ({url, html}) ->
-    payload = {url, html, timestamp: Date.now!}
+  print-remotely: ({url, html, pdf}) ->
+    payload = {url, html, pdf, timestamp: Date.now!}
     if !((cfg = @opt.server or {}) and cfg.key and cfg.url) => return lderror.reject 1015
     token = jsonwebtoken.sign payload, cfg.key
     axios.post cfg.url, {token}, {responseType: \stream, timeout: cfg.timeout or 0}
@@ -120,6 +126,8 @@ printer.prototype = Object.create(Object.prototype) <<< do
           printBackground: true
           paperWidth: 5.8  # A5 width (inch)
           paperHeight: 8.3 # A5 height (inch)
+        # 呼叫端可覆寫紙張等設定 ( 只接受 PDF-OPTS 列出的項目 ) , 例如 {preferCSSPageSize: true} 改用 CSS 的 @page
+        for k,v of (payload.pdf or {}) when k in PDF-OPTS => opt[k] = v
         ({data}) <- client.send 'Page.printToPDF', opt .then _
         client.detach!catch ->
         Buffer.from data, \base64
