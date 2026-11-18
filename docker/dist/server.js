@@ -43,7 +43,12 @@
       return printer.print({
         url: payload.url,
         html: payload.html,
-        pdf: payload.pdf
+        pdf: payload.pdf,
+        ready: payload.ready,
+        readyTimeout: payload.readyTimeout,
+        timeout: payload.timeout,
+        idleTimeout: payload.idleTimeout,
+        debounce: payload.debounce
       });
     }).then(function(arg$){
       var buf, i$, to$, i;

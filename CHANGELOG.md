@@ -1,5 +1,13 @@
 # Change Logs
 
+## v0.2.7
+
+ - support page-declared ready flag: a page sets `window.__printReady = false` when it starts rendering and any other value when done; printer waits for it ( capped by `readyTimeout`, default 60s ) after network idle, and then only debounces 300ms. pages without the flag behave as before. flag name can be overridden by `ready` option
+ - dismiss ( and log ) dialogs such as `alert`, which otherwise freeze the page in headless mode until protocol timeout
+ - forward wait options ( `ready`, `readyTimeout`, `timeout`, `idleTimeout`, `debounce` ) in remote printing and server
+ - poll ready flag by interval instead of `requestAnimationFrame`, which never fires in background pages of the page pool
+
+
 ## v0.2.6
 
  - support `pdf` option in `print` ( local, remote and server ) to override `Page.printToPDF` parameters such as `preferCSSPageSize`, paper size and margins. default stays A5

@@ -10,6 +10,13 @@ ctx = prepare: ->
     return lderror.reject 1022
   @inited = true
 
+# 頁面就緒旗標的預設名稱. 頁面在開始渲染時設 `window[name] = false`, 渲染完成設為 true ( 或其他非 false 值 ),
+# 列印端便會等到旗標翻轉才印; 頁面沒設 ( undefined ) 就沿用網路靜止的判斷, 舊頁面不受影響.
+READY-FLAG = \__printReady
+
+# 遠端列印時可由呼叫端轉送的等待參數
+WAIT-OPTS = <[ready readyTimeout timeout idleTimeout debounce]>
+
 # Page.printToPDF 可由呼叫端指定的參數
 PDF-OPTS = <[preferCSSPageSize landscape scale paperWidth paperHeight marginTop marginBottom marginLeft marginRight pageRanges]>
 
@@ -71,8 +78,10 @@ printer.prototype = Object.create(Object.prototype) <<< do
   print: (payload = {}) ->
     return if !@opt.server => @print-locally payload else @print-remotely payload
 
-  print-remotely: ({url, html, pdf}) ->
+  print-remotely: (opt = {}) ->
+    {url, html, pdf} = opt
     payload = {url, html, pdf, timestamp: Date.now!}
+    for k in WAIT-OPTS when opt[k]? => payload[k] = opt[k]
     if !((cfg = @opt.server or {}) and cfg.key and cfg.url) => return lderror.reject 1015
     token = jsonwebtoken.sign payload, cfg.key
     axios.post cfg.url, {token}, {responseType: \stream, timeout: cfg.timeout or 0}
@@ -80,7 +89,7 @@ printer.prototype = Object.create(Object.prototype) <<< do
 
   print-locally: (payload = {}) -> @exec (page) ~>
     # 逐段計時並記錄慢 / 失敗 / 未完成的請求, 以便追查卡住的原因.
-    lc = {t0: Date.now!, lap: [], req: new Map!, slow: [], failed: []}
+    lc = {t0: Date.now!, lap: [], req: new Map!, slow: [], failed: [], dialog: []}
     lap = (n) -> lc.lap.push "#n #{((Date.now! - lc.t0) / 1000).toFixed(1)}s"
     short = (u = '') -> u.replace(/\?.*/, '').substring(0, 120)
     h =
@@ -92,6 +101,10 @@ printer.prototype = Object.create(Object.prototype) <<< do
       requestfailed: (r) ->
         lc.req.delete r
         lc.failed.push "#{(r.failure! or {}).errorText} #{short r.url!}"
+      # alert / confirm 等對話框在 headless 下沒人關, 會讓頁面整個卡住 ( evaluate 等呼叫都等不到回應 ), 一律關掉並記錄.
+      dialog: (d) ->
+        lc.dialog.push "#{d.type!}: #{(d.message! or '').substring(0, 120)}"
+        d.dismiss!catch ->
     for k,v of h => page.on k, v
     timeout = payload.timeout or 30000
     # 只有頁面本身載入失敗才算錯誤 ( 交給 exec 重試 ); 等網路靜止逾時則照常列印,
@@ -106,7 +119,24 @@ printer.prototype = Object.create(Object.prototype) <<< do
         if !(e and e.name == \TimeoutError) or !lc.lap.length => return Promise.reject e
         lc.idle-timeout = true
       .then -> lap \idle
-      .then -> debounce(payload.debounce or 2000)
+      .then ->
+        # 頁面有宣告就緒旗標 ( 值為 false ) 時, 等它翻轉. 逾時照常列印, 理由同上.
+        flag = payload.ready or READY-FLAG
+        # 回傳 0: 沒宣告 / 1: 渲染中 / 2: 已完成 ( 列印端檢查前頁面就已完成 )
+        page.evaluate ((n) -> if !(n of window) => 0 else if window[n] == false => 1 else 2), flag
+          .then (state) ->
+            if !state => return
+            if state == 2 => return lc.ready = \done
+            lc.ready = \wait
+            # 列印站的分頁在背景, requestAnimationFrame 不會觸發, 所以不能用預設的 raf 輪詢。
+            page.waitForFunction ((n) -> window[n] != false), {polling: 200, timeout: (payload.ready-timeout or 60000)}, flag
+              .then -> lc.ready = \done
+          .catch (e) ->
+            if !(e and e.name == \TimeoutError) => return Promise.reject e
+            lc.ready = \timeout
+      .then -> lap \ready
+      # 頁面明確回報就緒時, 只需短暫等待收尾 ( 例如字型 / 重排 ).
+      .then -> debounce(payload.debounce or (if lc.ready == \done => 300 else 2000))
       .then ->
         page.evaluate ->
           ps = Array.from(document.images).map (img) ->
@@ -138,10 +168,11 @@ printer.prototype = Object.create(Object.prototype) <<< do
       .finally ~>
         if @opt.log =>
           pending = Array.from(lc.req.keys!).map (r) -> short r.url!
-          console.log "[@plotdb/print] #{lc.lap.join ' / '}#{if lc.idle-timeout => ' (idle timeout)' else ''}"
+          console.log "[@plotdb/print] #{lc.lap.join ' / '}#{if lc.idle-timeout => ' (idle timeout)' else ''}#{if lc.ready => " (ready: #{lc.ready})" else ''}"
           if lc.slow.length => console.log "[@plotdb/print] slow requests:\n  " + lc.slow.join('\n  ')
           if lc.failed.length => console.log "[@plotdb/print] failed requests:\n  " + lc.failed.join('\n  ')
           if pending.length => console.log "[@plotdb/print] pending requests:\n  " + pending.join('\n  ')
+          if lc.dialog.length => console.log "[@plotdb/print] dismissed dialogs:\n  " + lc.dialog.join('\n  ')
         for k,v of h => page.off k, v
         # 清空頁面以釋放記憶體; 分頁會被重複使用.
         page.goto \about:blank .catch ->
