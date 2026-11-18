@@ -37,6 +37,21 @@ Paper defaults to A5. Use `pdf` to override `Page.printToPDF` parameters ( `pref
 
 `pdf` works in both local and cloud mode ( the server needs v0.2.6 or later ).
 
+By default printer waits for network idle before printing, which may print a half-rendered page ( e.g., a loading screen ) for pages that keep rendering after network goes quiet. Such pages can tell printer when they are ready:
+
+    window.__printReady = false   # when rendering starts ( before network goes idle )
+    window.__printReady = true    # when done. any value other than `false` works, e.g., an error code
+
+printer then waits for the flag ( up to `readyTimeout`, default 60s; prints anyway when timed out ). Pages without the flag are not affected. Options:
+
+ - `ready`: flag name. default `__printReady`
+ - `readyTimeout`: max time (ms) waiting for the flag. default 60000
+ - `timeout`: page load timeout (ms). default 30000
+ - `idleTimeout`: max time (ms) waiting for network idle. default 20000
+ - `debounce`: wait (ms) before printing. default 2000, or 300 if the page reported ready
+
+These options are forwarded in cloud mode ( the server needs v0.2.7 or later ).
+
 
 ## Usage: Cloud Mode
 
