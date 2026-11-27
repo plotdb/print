@@ -151,7 +151,7 @@ printer.prototype = Object.create(Object.prototype) <<< do
         # it throws exception (ReadableStream is not a constructor) with older nodejs (v16):
         #page.pdf format: \A5
         # 2. with Chrome DevTools Protocol (CDP), by pass puppeteer directly.
-        (client) <- page.target!createCDPSession!then _
+        (client) <- page.createCDPSession!then _
         opt =
           printBackground: true
           paperWidth: 5.8  # A5 width (inch)

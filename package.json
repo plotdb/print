@@ -1,6 +1,6 @@
 {
   "name": "@plotdb/print",
-  "version": "0.2.7",
+  "version": "0.2.8",
   "description": "",
   "main": "dist/index.js",
   "files": [
@@ -46,7 +46,7 @@
   },
   "peerDependencies": {
     "easy-pdf-merge": "^0.2.6",
-    "puppeteer": "^23.11.1",
+    "puppeteer": "^25.19.0",
     "tmp": "^0.2.1"
   },
   "dependencies": {

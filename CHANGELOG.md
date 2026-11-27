@@ -1,5 +1,12 @@
 # Change Logs
 
+## v0.2.8
+
+ - upgrade peer dependency `puppeteer` to `^25.19.0`, which drops `extract-zip`, `proxy-agent`, `basic-ftp` and other vulnerable dependencies. requires Node.js >= 22.12
+ - use `page.createCDPSession` instead of the deprecated `page.target().createCDPSession`
+ - docker: use `node:22-slim`, upgrade `puppeteer` to `^25.19.0` and apply `npm audit fix`
+
+
 ## v0.2.7
 
  - support page-declared ready flag: a page sets `window.__printReady = false` when it starts rendering and any other value when done; printer waits for it ( capped by `readyTimeout`, default 60s ) after network idle, and then only debounces 300ms. pages without the flag behave as before. flag name can be overridden by `ready` option
