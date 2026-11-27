@@ -305,7 +305,7 @@
         }).then(function(){
           return lap('img');
         }).then(function(){
-          return page.target().createCDPSession().then(function(client){
+          return page.createCDPSession().then(function(client){
             var opt, k, ref$, v;
             opt = {
               printBackground: true,
